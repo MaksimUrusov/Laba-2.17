@@ -4,83 +4,77 @@
 import argparse
 import json
 import os.path
-from datetime import date
 
 
-def add_worker(staff, name, post, year):
+def add_plane(staff, destination, num, typ):
     """
-    Добавить данные о работнике.
+    Добавить данные о самолете.
     """
     staff.append(
         {
-            "name": name,
-            "post": post,
-            "year": year
+            "destination": destination,
+            "num": num,
+            "typ": typ,
         }
     )
     return staff
 
 
-def display_workers(staff):
+def display_planes(staff):
     """
-    Отобразить список работников.
+    Отобразить список самолетов.
     """
-    # Проверить, что список работников не пуст.
+    # Проверить, что список самолетов не пуст.
     if staff:
         # Заголовок таблицы.
         line = '+-{}-+-{}-+-{}-+-{}-+'.format(
             '-' * 4,
             '-' * 30,
             '-' * 20,
-            '-' * 8
+            '-' * 15
         )
         print(line)
         print(
-            '| {:^4} | {:^30} | {:^20} | {:^8} |'.format(
+            '| {:^4} | {:^30} | {:^20} | {:^15} |'.format(
                 "No",
-                "Ф.И.О.",
-                "Должность",
-                "Год"
+                "Пункт назначения",
+                "Номер рейса",
+                "Тип самолета"
             )
         )
         print(line)
 
-        # Вывести данные о всех сотрудниках.
-        for idx, worker in enumerate(staff, 1):
+        # Вывести данные о всех самолетах.
+        for idx, plane in enumerate(staff, 1):
             print(
-                '| {:>4} | {:<30} | {:<20} | {:>8} |'.format(
+                '| {:>4} | {:<30} | {:<20} | {:>15} |'.format(
                     idx,
-                    worker.get('name', ''),
-                    worker.get('post', ''),
-                    worker.get('year', 0)
+                    plane.get('destination', ''),
+                    plane.get('num', 0),
+                    plane.get('typ', '')
                 )
             )
+
         print(line)
 
     else:
-        print("Список работников пуст.")
+        print("Список самолетов пуст")
 
 
-def select_workers(staff, period):
+def select_planes(staff, jet):
     """
-    Выбрать работников с заданным стажем.
+    Выбрать самолеты с заданным типом.
     """
-    # Получить текущую дату.
-    today = date.today()
+    # Сформировать список самолетов.
+    result = [plane for plane in staff if jet == plane.get('typ', '')]
 
-    # Сформировать список работников.
-    result = []
-    for employee in staff:
-        if today.year - employee.get('year', today.year) >= period:
-            result.append(employee)
-
-    # Возвратить список выбранных работников.
+    # Возвратить список выбранных самолетов.
     return result
 
 
-def save_workers(file_name, staff):
+def save_planes(file_name, staff):
     """
-    Сохранить всех работников в файл JSON.
+    Сохранить все самолеты в файл JSON.
     """
     # Открыть файл с заданным именем для записи.
     with open(file_name, "w", encoding="utf-8") as fout:
@@ -89,9 +83,9 @@ def save_workers(file_name, staff):
         json.dump(staff, fout, ensure_ascii=False, indent=4)
 
 
-def load_workers(file_name):
+def load_planes(file_name):
     """
-    Загрузить всех работников из файла JSON.
+    Загрузить все самолеты из файла JSON.
     """
     # Открыть файл с заданным именем для чтения.
     with open(file_name, "r", encoding="utf-8") as fin:
@@ -121,50 +115,50 @@ def main(command_line=None):
     add = subparsers.add_parser(
         "add",
         parents=[file_parser],
-        help="Add a new worker"
+        help="Add a new plane"
+    )
+    add.add_argument(
+        "-d",
+        "--destination",
+        action="store",
+        required=True,
+        help="The plane's destination"
     )
     add.add_argument(
         "-n",
-        "--name",
-        action="store",
-        required=True,
-        help="The worker's name"
-    )
-    add.add_argument(
-        "-p",
-        "--post",
-        action="store",
-        help="The worker's post"
-    )
-    add.add_argument(
-        "-y",
-        "--year",
+        "--num",
         action="store",
         type=int,
         required=True,
-        help="The year of hiring"
+        help="The plane's numer"
+    )
+    add.add_argument(
+        "-t",
+        "--typ",
+        action="store",
+        required=True,
+        help="The plane's type"
     )
 
     # Создать субпарсер для отображения всех работников.
     _ = subparsers.add_parser(
         "display",
         parents=[file_parser],
-        help="Display all workers"
+        help="Display all planes"
     )
 
     # Создать субпарсер для выбора работников.
     select = subparsers.add_parser(
         "select",
         parents=[file_parser],
-        help="Select the workers"
+        help="Select the planes"
     )
     select.add_argument(
-        "-P",
-        "--period",
+        "-T",
+        "--type",
         action="store",
-        type=int,
         required=True,
-        help="The required period"
+        help="The required type"
     )
 
     # Выполнить разбор аргументов командной строки.
@@ -173,32 +167,32 @@ def main(command_line=None):
     # Загрузить всех работников из файла, если файл существует.
     is_dirty = False
     if os.path.exists(args.filename):
-        workers = load_workers(args.filename)
+        planes = load_planes(args.filename)
     else:
-        workers = []
+        planes = []
 
     # Добавить работника.
     if args.command == "add":
-        workers = add_worker(
-            workers,
-            args.name,
-            args.post,
-            args.year
+        planes = add_plane(
+            planes,
+            args.destination,
+            args.num,
+            args.typ
         )
         is_dirty = True
 
     # Отобразить всех работников.
     elif args.command == "display":
-        display_workers(workers)
+        display_planes(planes)
 
     # Выбрать требуемых рааботников.
     elif args.command == "select":
-        selected = select_workers(workers, args.period)
-        display_workers(selected)
+        selected = select_planes(planes, args.type)
+        display_planes(selected)
 
     # Сохранить данные в файл, если список работников был изменен.
     if is_dirty:
-        save_workers(args.filename, workers)
+        save_planes(args.filename, planes)
 
 
 if __name__ == '__main__':
